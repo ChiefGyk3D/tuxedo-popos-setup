@@ -1,0 +1,42 @@
+# tuxedo-popos-setup configuration. Copy to config/setup.conf (gitignored) and
+# edit. This file is sourced as shell, so keep it to plain assignments, and
+# keep it writable only by you (install.sh refuses a group or world writable
+# file). 1 = on, 0 = off.
+
+# --- modules, run in this order ---------------------------------------------
+ENABLE_TUXEDO=1        # TUXEDO signed apt repo, tuxedo-drivers, tuxedo-control-center
+ENABLE_DEVTOOLS=1      # developer tools (see the switches below)
+ENABLE_FLATPAKS=1      # Flathub remote and the apps listed below
+ENABLE_TOUCHPAD_FIX=0  # touchpad diagnostics only for now; no fix is installed
+
+# --- devtools switches --------------------------------------------------------
+DEVTOOLS_UV=1
+DEVTOOLS_RUSTUP=1
+DEVTOOLS_GO=1
+DEVTOOLS_TOFU=1        # OpenTofu from its signed apt repo
+DEVTOOLS_GH=1          # GitHub CLI from cli.github.com (needs >= 2.57)
+DEVTOOLS_VSCODE=1      # VS Code from Microsoft's signed apt repo
+DEVTOOLS_PODMAN=1      # rootless podman + podman-docker shim, no docker group
+
+# Pinned versions. Changing UV_VERSION means changing UV_SHA256 to match.
+#UV_VERSION=0.13.7
+#UV_SHA256=c5221ff41b7892bfc223543883600125f6a47fe845093e0f5bdff4f359196d83
+# The Go checksum is looked up on go.dev for whatever version you name.
+#GO_VERSION=1.27.3
+
+# --- lists ----------------------------------------------------------------------
+# Plain apt packages from Pop's own repos (devtools module).
+APT_PACKAGES=(
+    build-essential
+    cmake
+    pkg-config
+    git
+    python3-venv
+    pipx
+)
+
+# Flatpak app ids from Flathub, installed system-wide (flatpaks module).
+FLATPAK_APPS=(
+    com.discordapp.Discord
+    one.ablaze.floorp
+)
