@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every job is a caller of ChiefGyk3D/git-your-ship-together (GYST), pinned by
+# commit with its release in the comment. Input names were read from the
+# workflows themselves (bash-ci.yml, security.yml, ci-gate.yml) at v1.35.0.
+jobs:
+  # shellcheck, shfmt, actionlint and zizmor over every script and workflow,
+  # plus tests/run.sh (no root, changes nothing).
+  shell:
+    uses: ChiefGyk3D/git-your-ship-together/.github/workflows/bash-ci.yml@0db5ee880d1b4e37eb27443ffc1c37bd4ce8e8a2 # v1.35.0
+    permissions:
+      contents: read
+    with:
+      test-command: bash tests/run.sh
+
+  # gitleaks and Semgrep over the tree. The repository is private and has no
+  # GitHub Advanced Security, so CodeQL, dependency review and SARIF uploads
+  # are off; gitleaks and Semgrep still run and still fail on a finding.
+  security:
+    uses: ChiefGyk3D/git-your-ship-together/.github/workflows/security.yml@0db5ee880d1b4e37eb27443ffc1c37bd4ce8e8a2 # v1.35.0
+    # GitHub checks a called workflow's declared permissions at startup, so
+    # the caller must grant what security.yml declares for its optional jobs
+    # (Snyk, Scorecard), although no secret or Doppler identity is configured.
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+      id-token: write
+    with:
+      advanced-security: "false"
+      gitleaks-upload-sarif: false
+      pip-audit-requirements: ""
+      egress-policy: block
+
+  # The one check branch protection requires: `ci / CI green`.
+  ci:
+    if: always()
+    needs: [shell, security]
+    uses: ChiefGyk3D/git-your-ship-together/.github/workflows/ci-gate.yml@0db5ee880d1b4e37eb27443ffc1c37bd4ce8e8a2 # v1.35.0
+    permissions: {}
+    with:
+      needs-json: '{"shell": "${{ needs.shell.result }}", "security": "${{ needs.security.result }}"}'
