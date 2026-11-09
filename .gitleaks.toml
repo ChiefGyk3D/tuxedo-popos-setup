@@ -1,0 +1,15 @@
+title = "tuxedo-popos-setup gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public vendor key fingerprints and file checksums that the installer pins and verifies (NAME_FPR / NAME_SHA256 assignments). They are public identifiers, not secrets."
+condition = "AND"
+# Measured on gitleaks 8.30.1: without targetRules the paths entry acts as a
+# global file skip and the regexes are ignored; regexTarget = "line" is needed
+# so the whole assignment line is matched, not only the hex secret.
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+paths = ['''^modules/(tuxedo|devtools)\.sh$''']
+regexes = ['''^\s*[A-Z][A-Z0-9_]*_(FPR|SHA256)=[0-9A-Fa-f]{40,64}\s*$''']
