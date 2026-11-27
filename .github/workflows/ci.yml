@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions: {}
+
+jobs:
+  security:
+    uses: ChiefGyk3D/git-your-ship-together/.github/workflows/security.yml@0e0cef39590d96f7c10217b969ab413e88d72024 # v1.39.0
+    # The shared workflow's jobs request these scopes (SARIF upload, the
+    # dependency-review comment, OIDC for its optional jobs), and a caller must
+    # grant at least what the nested jobs ask for, even for jobs that are off.
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+      id-token: write
+    with:
+      # Private repository without GitHub Advanced Security: no SARIF upload,
+      # no CodeQL or dependency review. gitleaks and Semgrep still run.
+      advanced-security: "false"
+      gitleaks-upload-sarif: false
+      codeql: false
+      dependency-review: false
+      pip-audit-requirements: ""
+      egress-policy: block
+
+  ci:
+    if: always()
+    needs: [security]
+    uses: ChiefGyk3D/git-your-ship-together/.github/workflows/ci-gate.yml@0e0cef39590d96f7c10217b969ab413e88d72024 # v1.39.0
+    permissions: {}
+    with:
+      needs-json: ${{ toJSON(needs) }}
